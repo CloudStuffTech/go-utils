@@ -6,7 +6,7 @@ import (
 	jwtLib "github.com/golang-jwt/jwt"
 )
 
-func ParseJWT(jwtToken, secretKey string) (jwtLib.MapClaims, error) {
+func Parse(jwtToken, secretKey string) (jwtLib.MapClaims, error) {
 	token, err := jwtLib.Parse(jwtToken, func(token *jwtLib.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwtLib.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
