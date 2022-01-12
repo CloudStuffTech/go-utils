@@ -166,6 +166,35 @@ func FindAll(db *mongo.Database, model Model, query bson.M, queryOpts *FindOptio
 	return dataArr
 }
 
+func FindAllv2(db *mongo.Database, model Model, query bson.M, queryOpts *FindOptions) ([]interface{}, error) {
+	var duration = time.Second
+	var opts = &options.FindOptions{MaxTime: &duration}
+	if queryOpts != nil {
+		opts.Sort = queryOpts.Sort
+		opts.Hint = queryOpts.Hint
+		opts.Limit = queryOpts.Limit
+		opts.Skip = queryOpts.Skip
+		opts.Projection = queryOpts.Projection
+		if queryOpts.Timeout > 0 {
+			opts.MaxTime = &queryOpts.Timeout
+		}
+	}
+	var cur, err = db.Collection(model.Table()).Find(context.Background(), query, opts)
+	var dataArr []interface{}
+	if err != nil {
+		return dataArr, err
+	}
+	defer cur.Close(context.Background())
+	for cur.Next(context.Background()) {
+		var dummyObj = model.New()
+		err := cur.Decode(dummyObj)
+		if err == nil {
+			dataArr = append(dataArr, dummyObj)
+		}
+	}
+	return dataArr, nil
+}
+
 // FindOneWithOpts method will try to find the object based on the query and options
 func FindOneWithOpts(db *mongo.Database, model Model, query bson.M, queryOpts *FindOptions) Model {
 	var duration = time.Second
