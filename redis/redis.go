@@ -99,6 +99,16 @@ func (c *Client) HGetAll(key string) map[string]string {
 	return result
 }
 
+// HGet will return the hash map key
+func (c *Client) HGet(key, field string) (string, bool) {
+	resp := c.conn.HGet(ctx, key, field)
+	result, err := resp.Result()
+	if err != nil {
+		return "", false
+	}
+	return result, true
+}
+
 // Del method will remove single key from redis
 func (c *Client) Del(key string) {
 	c.conn.Del(ctx, key)
