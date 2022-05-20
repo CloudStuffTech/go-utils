@@ -2,11 +2,14 @@ package cache
 
 import (
 	"encoding/json"
+	"sync"
 	"time"
 
 	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/patrickmn/go-cache"
 )
+
+var mu sync.Mutex
 
 type Client struct {
 	prefix string
@@ -164,7 +167,9 @@ func (cc *MultiClient) GetWithSet(key string, resultObj interface{}) (interface{
 	}
 	item, err := cc.mc.Get(k)
 	if err == nil {
+		mu.Lock()
 		err = json.Unmarshal(item.Value, resultObj)
+		mu.Unlock()
 		if err == nil {
 			cc.client.Set(k, resultObj, time.Duration(cc.expiration)*time.Second)
 			return resultObj, true
@@ -203,7 +208,9 @@ func (cc *MultiClient) GetIntWithSet(key string, resultObj int64) (int64, bool) 
 	}
 	item, err := cc.mc.Get(k)
 	if err == nil {
+		mu.Lock()
 		err = json.Unmarshal(item.Value, &resultObj)
+		mu.Unlock()
 		if err == nil {
 			cc.client.Set(k, resultObj, 5*time.Minute)
 			return resultObj, true
