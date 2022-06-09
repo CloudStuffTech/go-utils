@@ -6,6 +6,7 @@ import (
 	"crypto/hmac"
 	cryptoRand "crypto/rand"
 	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
@@ -137,4 +138,10 @@ func DecryptText(ciphertext, key []byte) ([]byte, error) {
 	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
 
 	return plaintext, err
+}
+
+func Sha512Hash(value string) string {
+	h := sha512.New()
+	h.Write([]byte(value))
+	return hex.EncodeToString(h.Sum(nil))
 }
