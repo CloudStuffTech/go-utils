@@ -17,7 +17,7 @@ go get github.com/mailjet/mailjet-apiv3-go
 go get -u github.com/CloudStuffTech/go-utils
 ```
 
-## Structs OR Functions Available
+## Packages Available
 ```
 CSV Writer
 Digital Element
@@ -34,3 +34,7 @@ Security
 Time
 Workerqueue
 ```
+
+## Contribution Guidelines
+
+[Github Guidelines](https://www.notion.so/trackier/Github-81ced8c098b941319a9a3d321c5b6033)
