@@ -18,7 +18,7 @@ go get -u github.com/CloudStuffTech/go-utils
 ```
 
 ## Structs OR Functions Available
-
+```
 CSV Writer
 Digital Element
 Google Analytics
@@ -33,3 +33,4 @@ Request
 Security
 Time
 Workerqueue
+```
