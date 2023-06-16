@@ -27,3 +27,12 @@ func GetInZone(locs map[string]*t.Location, zone string) t.Time {
 	nowTime := t.Now().In(loc)
 	return nowTime
 }
+
+// GetTimeZone will return the zone in the provided zone
+func GetTimeZone(locs map[string]*t.Location, zone string) *t.Location {
+	loc, ok := locs[zone]
+	if !ok {
+		loc = time.UTC
+	}
+	return loc
+}
