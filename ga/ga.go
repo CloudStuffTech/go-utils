@@ -3,6 +3,7 @@ package ga
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net"
 	netHttp "net/http"
 	"sync"
@@ -115,6 +116,7 @@ func (gd *GA4Data) createMPData() *gA4Data {
 		UserID:   gd.UserID,
 		Events:   events,
 	}
+	fmt.Printf("==ga4eventdata %+v\n", d)
 	return d
 }
 
@@ -181,6 +183,7 @@ func (queue *Queue) PushGA4(data *GA4Data) {
 		d := data.createMPData()
 		jsonStr, jsonErr := json.Marshal(d)
 		if jsonErr != nil {
+			fmt.Printf("==jsonErr %+v\n", jsonErr)
 			return
 		}
 		var req, err = netHttp.NewRequest("POST", baseURLGA4, bytes.NewBuffer(jsonStr))
