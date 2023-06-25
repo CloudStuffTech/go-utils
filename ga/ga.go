@@ -1,6 +1,8 @@
 package ga
 
 import (
+	"bytes"
+	"encoding/json"
 	"net"
 	netHttp "net/http"
 	"sync"
@@ -8,6 +10,7 @@ import (
 )
 
 const baseURL = "https://www.google-analytics.com/collect"
+const baseURLGA4 = "https://www.google-analytics.com/mp/collect"
 const version = "1"
 const hitType = "pageview"
 
@@ -28,7 +31,7 @@ var (
 
 // Analytics struct contains the information which can be sent to
 type Analytics struct {
-	ClientID        string
+	ClientID        string `json:"client_id"`
 	DataSource      string
 	UserIP          string
 	UserAgent       string
@@ -43,12 +46,87 @@ type Analytics struct {
 	DocumentTitle   string
 }
 
+type GA4EventParams struct {
+	EngmtTime    int    `json:"engagement_time_msec"`
+	PageTitle    string `json:"page_title,omitempty"`
+	PageLocation string `json:"page_location,omitempty"`
+}
+
+type GA4Event struct {
+	Name   string         `json:"name"`
+	Params GA4EventParams `json:"params"`
+}
+
+type gA4Data struct {
+	ClientID string     `json:"client_id"`
+	UserID   string     `json:"user_id"`
+	Events   []GA4Event `json:"events"`
+}
+
+type GA4Data struct {
+	ClientID       string
+	UserID         string
+	OrgName        string
+	TrackingDomain string
+	Hostname       string
+	Keyword        string
+	Location       string
+}
+
+func (gd *GA4Data) createMPData() *gA4Data {
+	var events []GA4Event
+	events = append(events, GA4Event{
+		Name: "page_view",
+		Params: GA4EventParams{
+			EngmtTime:    10,
+			PageTitle:    gd.Hostname,
+			PageLocation: gd.Location,
+		},
+	})
+	if len(gd.TrackingDomain) > 0 {
+		events = append(events, GA4Event{
+			Name: "page_view",
+			Params: GA4EventParams{
+				EngmtTime:    10,
+				PageTitle:    gd.TrackingDomain,
+				PageLocation: gd.Location,
+			},
+		})
+	}
+	if len(gd.OrgName) > 0 {
+		events = append(events, GA4Event{
+			Name: gd.OrgName,
+			Params: GA4EventParams{
+				EngmtTime: 10,
+			},
+		})
+	}
+	if len(gd.Keyword) > 0 {
+		events = append(events, GA4Event{
+			Name: gd.Keyword,
+			Params: GA4EventParams{
+				EngmtTime: 10,
+			},
+		})
+	}
+
+	var d = &gA4Data{
+		ClientID: gd.ClientID,
+		UserID:   gd.UserID,
+		Events:   events,
+	}
+	return d
+}
+
 // Queue struct will be used to send data to GA
 type Queue struct {
 	SendCount  int
 	ResetCount int
 	CC         int // current counter
 	TrackingID string
+
+	APISecret     string
+	MeasurementID string
 }
 
 // Push method will send data to analytics by using basic sampling logic
@@ -80,6 +158,38 @@ func (queue *Queue) Push(data *Analytics) {
 		q.Add("dh", data.DocumentHost)
 		q.Add("dp", data.DocumentPath)
 		q.Add("dt", data.DocumentTitle)
+		req.URL.RawQuery = q.Encode()
+
+		var resp, reqErr = requestClient.Do(req)
+		if reqErr == nil {
+			resp.Body.Close()
+		}
+	} else if currentGACount > queue.ResetCount {
+		mu.Lock()
+		queue.CC = 0
+		mu.Unlock()
+	}
+}
+
+func (queue *Queue) PushGA4(data *GA4Data) {
+	mu.Lock()
+	queue.CC++
+	var currentGACount = queue.CC
+	mu.Unlock()
+
+	if currentGACount <= queue.SendCount {
+		d := data.createMPData()
+		jsonStr, jsonErr := json.Marshal(d)
+		if jsonErr != nil {
+			return
+		}
+		var req, err = netHttp.NewRequest("POST", baseURLGA4, bytes.NewBuffer(jsonStr))
+		if err != nil {
+			return
+		}
+		q := req.URL.Query()
+		q.Add("api_secret", queue.APISecret)
+		q.Add("measurement_id", queue.MeasurementID)
 		req.URL.RawQuery = q.Encode()
 
 		var resp, reqErr = requestClient.Do(req)
