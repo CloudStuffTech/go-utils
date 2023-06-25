@@ -46,21 +46,21 @@ type Analytics struct {
 	DocumentTitle   string
 }
 
-type GA4EventParams struct {
+type ga4EventParams struct {
 	EngmtTime    int    `json:"engagement_time_msec"`
 	PageTitle    string `json:"page_title,omitempty"`
 	PageLocation string `json:"page_location,omitempty"`
 }
 
-type GA4Event struct {
+type ga4Event struct {
 	Name   string         `json:"name"`
-	Params GA4EventParams `json:"params"`
+	Params ga4EventParams `json:"params"`
 }
 
 type gA4Data struct {
 	ClientID string     `json:"client_id"`
 	UserID   string     `json:"user_id"`
-	Events   []GA4Event `json:"events"`
+	Events   []ga4Event `json:"events"`
 }
 
 type GA4Data struct {
@@ -74,19 +74,19 @@ type GA4Data struct {
 }
 
 func (gd *GA4Data) createMPData() *gA4Data {
-	var events []GA4Event
-	events = append(events, GA4Event{
+	var events []ga4Event
+	events = append(events, ga4Event{
 		Name: "page_view",
-		Params: GA4EventParams{
+		Params: ga4EventParams{
 			EngmtTime:    10,
 			PageTitle:    gd.Hostname,
 			PageLocation: gd.Location,
 		},
 	})
 	if len(gd.TrackingDomain) > 0 {
-		events = append(events, GA4Event{
+		events = append(events, ga4Event{
 			Name: "page_view",
-			Params: GA4EventParams{
+			Params: ga4EventParams{
 				EngmtTime:    10,
 				PageTitle:    gd.TrackingDomain,
 				PageLocation: gd.Location,
@@ -94,17 +94,17 @@ func (gd *GA4Data) createMPData() *gA4Data {
 		})
 	}
 	if len(gd.OrgName) > 0 {
-		events = append(events, GA4Event{
+		events = append(events, ga4Event{
 			Name: gd.OrgName,
-			Params: GA4EventParams{
+			Params: ga4EventParams{
 				EngmtTime: 10,
 			},
 		})
 	}
 	if len(gd.Keyword) > 0 {
-		events = append(events, GA4Event{
+		events = append(events, ga4Event{
 			Name: gd.Keyword,
-			Params: GA4EventParams{
+			Params: ga4EventParams{
 				EngmtTime: 10,
 			},
 		})
