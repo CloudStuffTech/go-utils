@@ -18,8 +18,8 @@ type Config struct {
 }
 
 type Client struct {
-	mclient *mongo.Client
-	db      *mongo.Database
+	Mclient *mongo.Client
+	Db      *mongo.Database
 }
 
 // NewClient method takes a config map argument
@@ -42,17 +42,17 @@ func NewClient(conf Config) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	client.mclient = mongoClient
-	client.db = mongoClient.Database(conf.Database)
+	client.Mclient = mongoClient
+	client.Db = mongoClient.Database(conf.Database)
 	return client, nil
 }
 
 func (c *Client) GetDb() *mongo.Database {
-	return c.db
+	return c.Db
 }
 
 func (c *Client) Ping() error {
-	return c.mclient.Ping(context.TODO(), nil)
+	return c.Mclient.Ping(context.TODO(), nil)
 }
 
 func (c *Client) GenerateID() primitive.ObjectID {

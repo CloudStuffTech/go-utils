@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go/pubsub v1.10.3
 	github.com/avct/uasurfer v0.0.0-20191028135549-26b5daa857f1
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
+	github.com/confluentinc/confluent-kafka-go v1.9.2 // indirect
 	github.com/etf1/ip2proxy v0.0.0-20180322084537-1520a10d0dcb
 	github.com/go-redis/redis/v8 v8.8.3
 	github.com/golang-jwt/jwt v3.2.2+incompatible
