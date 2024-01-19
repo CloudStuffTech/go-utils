@@ -51,6 +51,10 @@ func (c *Client) GetDb() *mongo.Database {
 	return c.db
 }
 
+func (c *Client) GetClient() *mongo.Client {
+	return c.mclient
+}
+
 func (c *Client) Ping() error {
 	return c.mclient.Ping(context.TODO(), nil)
 }
