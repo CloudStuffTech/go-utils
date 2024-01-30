@@ -135,6 +135,15 @@ func (c *Clientv2) HIncrByFloat(key, field string, inc float64) {
 	}
 }
 
+// HGet will get the value of hashmap field
+func (c *Clientv2) HGet(key, field string) string {
+	var result string
+	if c.pool != nil {
+		c.pool.Do(radix.Cmd(&result, "HGET", key, field))
+	}
+	return result
+}
+
 // SCard will get the size of set
 func (c *Clientv2) SCard(key string) int {
 	var count int
