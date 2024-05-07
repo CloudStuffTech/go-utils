@@ -25,6 +25,7 @@ require (
 	github.com/stretchr/testify v1.7.1 // indirect
 	go.mongodb.org/mongo-driver v1.5.2
 	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac // indirect
+	google.golang.org/api v0.45.0
 	google.golang.org/genproto v0.0.0-20220503193339-ba3ae3f07e29 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

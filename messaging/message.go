@@ -5,11 +5,17 @@ import (
 	"errors"
 
 	"cloud.google.com/go/pubsub"
+	"google.golang.org/api/option"
 )
 
 const (
 	_pubSub = "pubsub"
 )
+
+type Opts struct {
+	CredentialsFile string
+	CredentialsJson []byte
+}
 
 // Message struct holds the information which is required to send message to
 // messaging services like pub/sub or kafka
@@ -30,6 +36,27 @@ func NewPubSub(project, topic string) (*Message, error) {
 	var m = &Message{Project: project, TopicName: topic}
 	var ctx = context.Background()
 	var client, err = pubsub.NewClient(ctx, m.Project)
+	if err != nil {
+		return nil, err
+	}
+	m.client = client
+	m.topic = client.Topic(m.TopicName)
+	m.ctx = ctx
+	m.messageType = _pubSub
+
+	return m, nil
+}
+
+func NewPubSubWithOpts(project, topic string, opts *Opts) (*Message, error) {
+	var m = &Message{Project: project, TopicName: topic}
+	var ctx = context.Background()
+	var pubSubOpts option.ClientOption
+	if len(opts.CredentialsFile) > 0 {
+		pubSubOpts = option.WithCredentialsFile(opts.CredentialsFile)
+	} else {
+		pubSubOpts = option.WithCredentialsJSON(opts.CredentialsJson)
+	}
+	var client, err = pubsub.NewClient(ctx, m.Project, pubSubOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +112,7 @@ func (m *Message) SendWithID(msg []byte) (string, error) {
 		var serverID, err = result.Get(m.ctx)
 		return serverID, err
 	}
-	return "", errors.New("Invalid message type")
+	return "", errors.New("invalid message type")
 }
 
 // SendBackground delivers the message in background
