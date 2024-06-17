@@ -3,6 +3,7 @@ package messaging
 import (
 	"context"
 	"errors"
+	"time"
 
 	"cloud.google.com/go/pubsub"
 	"google.golang.org/api/option"
@@ -14,6 +15,7 @@ const (
 
 type Opts struct {
 	CredentialsFile string
+	Timeout         int
 	CredentialsJson []byte
 }
 
@@ -24,6 +26,7 @@ type Message struct {
 	SubName     string
 	TopicName   string
 	messageType string
+	Timeout     int
 	client      *pubsub.Client
 	topic       *pubsub.Topic
 	sub         *pubsub.Subscription
@@ -64,6 +67,7 @@ func NewPubSubWithOpts(project, topic string, opts *Opts) (*Message, error) {
 	m.topic = client.Topic(m.TopicName)
 	m.ctx = ctx
 	m.messageType = _pubSub
+	m.Timeout = opts.Timeout
 
 	return m, nil
 }
@@ -88,14 +92,26 @@ func (m *Message) Receive(callback func(ctx context.Context, msg *pubsub.Message
 	return err
 }
 
+func (m *Message) getContext() (context.Context, context.CancelFunc) {
+	if m.Timeout > 0 {
+		var ctx, cancelCtx = context.WithTimeout(m.ctx, time.Duration(m.Timeout)*time.Millisecond)
+		return ctx, cancelCtx
+	} else {
+		var fc = func() {}
+		return m.ctx, fc
+	}
+}
+
 // Send will check whether message delivery was acknowledged by the service
 func (m *Message) Send(msg []byte) bool {
+	var ctx, cancelCtx = m.getContext()
+	defer cancelCtx()
 	switch m.messageType {
 	case _pubSub:
-		var result = m.topic.Publish(m.ctx, &pubsub.Message{
+		var result = m.topic.Publish(ctx, &pubsub.Message{
 			Data: msg,
 		})
-		var _, err = result.Get(m.ctx)
+		var _, err = result.Get(ctx)
 		// TODO: may be retry sending the message if it failed?
 		return err == nil
 	}
@@ -104,12 +120,14 @@ func (m *Message) Send(msg []byte) bool {
 
 // SendWithID will check whether message delivery was acknowledged by the service
 func (m *Message) SendWithID(msg []byte) (string, error) {
+	var ctx, cancelCtx = m.getContext()
+	defer cancelCtx()
 	switch m.messageType {
 	case _pubSub:
-		var result = m.topic.Publish(m.ctx, &pubsub.Message{
+		var result = m.topic.Publish(ctx, &pubsub.Message{
 			Data: msg,
 		})
-		var serverID, err = result.Get(m.ctx)
+		var serverID, err = result.Get(ctx)
 		return serverID, err
 	}
 	return "", errors.New("invalid message type")
@@ -117,9 +135,11 @@ func (m *Message) SendWithID(msg []byte) (string, error) {
 
 // SendBackground delivers the message in background
 func (m *Message) SendBackground(msg []byte) {
+	var ctx, cancelCtx = m.getContext()
+	defer cancelCtx()
 	switch m.messageType {
 	case _pubSub:
-		m.topic.Publish(m.ctx, &pubsub.Message{
+		m.topic.Publish(ctx, &pubsub.Message{
 			Data: msg,
 		})
 	}
