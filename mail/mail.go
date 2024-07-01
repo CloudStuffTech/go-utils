@@ -24,12 +24,18 @@ type Params struct {
 	Timeout         int      // timeout in seconds
 }
 
+type Attachment struct {
+	Filename string
+	Content  string
+}
+
 type MailjetParams struct {
 	SenderEmail, SenderName, ReplyToEmail string
 	RecipientEmail                        []string
 	Subject                               string
 	CC, BCC                               []string
 	TextPart, HtmlPart                    string
+	Attachments                           []Attachment
 }
 
 // SendViaMailgun will try to send the mail using mailgun
@@ -78,24 +84,35 @@ func SendViaMailjet(conf *MailjetConfig, params *MailjetParams) (*mailjet.Result
 	}
 
 	htmlContent := params.HtmlPart
-
-	messagesInfo := []mailjet.InfoMessagesV31{
-		mailjet.InfoMessagesV31{
-			From: &mailjet.RecipientV31{
-				Email: params.SenderEmail,
-				Name:  params.SenderName,
-			},
-			ReplyTo: &mailjet.RecipientV31{
-				Email: params.ReplyToEmail,
-			},
-			To:       &toMailjetRecepient,
-			Cc:       &ccMailjetRecepient,
-			Bcc:      &bccMailjetRecepient,
-			Subject:  params.Subject,
-			TextPart: params.TextPart,
-			HTMLPart: htmlContent,
+	msg := mailjet.InfoMessagesV31{
+		From: &mailjet.RecipientV31{
+			Email: params.SenderEmail,
+			Name:  params.SenderName,
 		},
+		ReplyTo: &mailjet.RecipientV31{
+			Email: params.ReplyToEmail,
+		},
+		To:       &toMailjetRecepient,
+		Cc:       &ccMailjetRecepient,
+		Bcc:      &bccMailjetRecepient,
+		Subject:  params.Subject,
+		TextPart: params.TextPart,
+		HTMLPart: htmlContent,
 	}
+
+	if len(params.Attachments) > 0 {
+		var result mailjet.AttachmentsV31
+		for _, atch := range params.Attachments {
+			at := mailjet.AttachmentV31{
+				Filename:      atch.Filename,
+				Base64Content: atch.Content,
+			}
+			result = append(result, at)
+		}
+		msg.Attachments = &result
+	}
+
+	messagesInfo := []mailjet.InfoMessagesV31{msg}
 	messages := mailjet.MessagesV31{Info: messagesInfo}
 	res, err := mailjetClient.SendMailV31(&messages)
 	return res, err
