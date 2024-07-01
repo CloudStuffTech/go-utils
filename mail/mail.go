@@ -26,6 +26,7 @@ type Params struct {
 }
 
 type Attachment struct {
+	ContentType   string
 	Filename      string
 	Content       []byte
 	Base64Content string
@@ -113,6 +114,7 @@ func SendViaMailjet(conf *MailjetConfig, params *MailjetParams) (*mailjet.Result
 			if len(atch.Base64Content) > 0 {
 				at := mailjet.AttachmentV31{
 					Filename:      atch.Filename,
+					ContentType:   atch.ContentType,
 					Base64Content: atch.Base64Content,
 				}
 				result = append(result, at)
