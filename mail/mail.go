@@ -22,11 +22,13 @@ type Params struct {
 	ReplyTo         string
 	CC, BCC         []string // CC emails
 	Timeout         int      // timeout in seconds
+	Attachments     []Attachment
 }
 
 type Attachment struct {
-	Filename string
-	Content  string
+	Filename      string
+	Content       []byte
+	Base64Content string
 }
 
 type MailjetParams struct {
@@ -45,6 +47,11 @@ func SendViaMailgun(conf *Config, params *Params) (string, string, error) {
 	message.SetHtml(params.Body)
 	if len(params.ReplyTo) > 0 {
 		message.SetReplyTo(params.ReplyTo)
+	}
+	if len(params.Attachments) > 0 {
+		for _, atch := range params.Attachments {
+			message.AddBufferAttachment(atch.Filename, atch.Content)
+		}
 	}
 
 	for _, emailID := range params.CC {
@@ -103,11 +110,13 @@ func SendViaMailjet(conf *MailjetConfig, params *MailjetParams) (*mailjet.Result
 	if len(params.Attachments) > 0 {
 		var result mailjet.AttachmentsV31
 		for _, atch := range params.Attachments {
-			at := mailjet.AttachmentV31{
-				Filename:      atch.Filename,
-				Base64Content: atch.Content,
+			if len(atch.Base64Content) > 0 {
+				at := mailjet.AttachmentV31{
+					Filename:      atch.Filename,
+					Base64Content: atch.Base64Content,
+				}
+				result = append(result, at)
 			}
-			result = append(result, at)
 		}
 		msg.Attachments = &result
 	}
