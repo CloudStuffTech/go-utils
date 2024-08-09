@@ -21,12 +21,13 @@ type Client struct {
 
 // RequestOptions struct
 type RequestOptions struct {
-	Method  string
-	URL     string
-	Body    string
-	Retries int
-	Query   map[string]string
-	Headers map[string]string
+	Method    string
+	URL       string
+	Body      string
+	BodyBytes []byte
+	Retries   int
+	Query     map[string]string
+	Headers   map[string]string
 
 	RetryInterval time.Duration // retry after x milliseconds
 }
@@ -60,6 +61,9 @@ func (c *Client) Request(opts *RequestOptions) (*Response, error) {
 		url += "&" + k + "=" + v
 	}
 	byteBody := []byte(opts.Body)
+	if len(opts.BodyBytes) > 0 {
+		byteBody = opts.BodyBytes
+	}
 	var body = bytes.NewBuffer(byteBody)
 	var req, err = netHttp.NewRequest(opts.Method, url, body)
 	for k, v := range opts.Headers {
