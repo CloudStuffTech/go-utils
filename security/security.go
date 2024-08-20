@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"strings"
 	"time"
 
 	"crypto/md5"
@@ -144,4 +145,14 @@ func Sha512Hash(value string) string {
 	h := sha512.New()
 	h.Write([]byte(value))
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+func AddSlashes(str string) string {
+	replacer := strings.NewReplacer(
+		"\\", "\\\\",
+		"'", "\\'",
+		"\"", "\\\"",
+		"\x00", "\\x00",
+	)
+	return replacer.Replace(str)
 }
