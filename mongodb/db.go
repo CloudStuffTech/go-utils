@@ -2,6 +2,8 @@ package mongodb
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -61,4 +63,18 @@ func (c *Client) Ping() error {
 
 func (c *Client) GenerateID() primitive.ObjectID {
 	return primitive.NewObjectID()
+}
+
+func (c *Client) Disconnect() error {
+	client := c.mclient
+	if client == nil {
+		return errors.New("mongo client is empty")
+	}
+
+	err := client.Disconnect(context.TODO())
+	if err != nil {
+		return err
+	}
+	fmt.Println("MongoDB Disconnected Successfully")
+	return nil
 }
