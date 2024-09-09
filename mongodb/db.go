@@ -40,7 +40,7 @@ func NewClient(conf Config) (*Client, error) {
 	if len(conf.Username) > 0 && len(conf.Password) > 0 {
 		opts.Auth = auth
 	}
-	mongoClient, err := mongo.Connect(context.TODO(), opts)
+	mongoClient, err := mongo.Connect(context.Background(), opts)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (c *Client) GetClient() *mongo.Client {
 }
 
 func (c *Client) Ping() error {
-	return c.mclient.Ping(context.TODO(), nil)
+	return c.mclient.Ping(context.Background(), nil)
 }
 
 func (c *Client) GenerateID() primitive.ObjectID {
