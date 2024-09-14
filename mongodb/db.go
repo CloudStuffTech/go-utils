@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 type Config struct {
@@ -17,6 +18,7 @@ type Config struct {
 	Opts       string
 	Database   string
 	Hosts      []string
+	ReadPref   string
 }
 
 type Client struct {
@@ -39,6 +41,9 @@ func NewClient(conf Config) (*Client, error) {
 	}
 	if len(conf.Username) > 0 && len(conf.Password) > 0 {
 		opts.Auth = auth
+	}
+	if conf.ReadPref == "secondary" {
+		opts.SetReadPreference(readpref.Secondary())
 	}
 	mongoClient, err := mongo.Connect(context.Background(), opts)
 	if err != nil {
