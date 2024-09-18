@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/mediocregopher/radix/v3"
+	"github.com/redis/go-redis/v9"
 )
 
 var ctx = context.Background()
