@@ -89,6 +89,24 @@ func (c *Client) HIncrBy(key, field string, inc int64) int64 {
 	return result
 }
 
+func (c *Client) SIsMember(key, member string) bool {
+	resp := c.conn.SIsMember(ctx, key, member)
+	result, _ := resp.Result()
+	return result
+}
+
+func (c *Client) SAdd(key, member string) int64 {
+	resp := c.conn.SAdd(ctx, key, member)
+	result, _ := resp.Result()
+	return result
+}
+
+func (c *Client) SRandMember(key, field string, inc int64) string {
+	resp := c.conn.SRandMember(ctx, key)
+	result, _ := resp.Result()
+	return result
+}
+
 // HGetAll will return the hash map
 func (c *Client) HGetAll(key string) map[string]string {
 	resp := c.conn.HGetAll(ctx, key)
@@ -169,6 +187,14 @@ func (c *Clientv2) SAdd(key, field string) int {
 		c.pool.Do(radix.Cmd(&success, "SADD", key, field))
 	}
 	return success
+}
+
+func (c *Clientv2) SRandMember(key string) string {
+	var result string
+	if c.pool != nil {
+		c.pool.Do(radix.Cmd(&result, "SRANDMEMBER", key))
+	}
+	return result
 }
 
 // Close method closes the redis connection
