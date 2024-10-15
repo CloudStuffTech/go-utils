@@ -101,7 +101,7 @@ func (c *Client) SAdd(key, member string) int64 {
 	return result
 }
 
-func (c *Client) SRandMember(key, field string, inc int64) string {
+func (c *Client) SRandMember(key string) string {
 	resp := c.conn.SRandMember(ctx, key)
 	result, _ := resp.Result()
 	return result
