@@ -107,6 +107,18 @@ func (c *Client) SRandMember(key string) string {
 	return result
 }
 
+func (c *Client) SCard(key string) int64 {
+	resp := c.conn.SCard(ctx, key)
+	result, _ := resp.Result()
+	return result
+}
+
+func (c *Client) SRem(key, member string) int64 {
+	resp := c.conn.SRem(ctx, key, member)
+	result, _ := resp.Result()
+	return result
+}
+
 // HGetAll will return the hash map
 func (c *Client) HGetAll(key string) map[string]string {
 	resp := c.conn.HGetAll(ctx, key)
@@ -167,6 +179,14 @@ func (c *Clientv2) SCard(key string) int {
 	var count int
 	if c.pool != nil {
 		c.pool.Do(radix.Cmd(&count, "SCARD", key))
+	}
+	return count
+}
+
+func (c *Clientv2) SRem(key, member string) int {
+	var count int
+	if c.pool != nil {
+		c.pool.Do(radix.Cmd(&count, "SREM", key, member))
 	}
 	return count
 }
