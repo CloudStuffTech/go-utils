@@ -2,6 +2,7 @@ package cache
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -89,6 +90,10 @@ func NewMultiClientV2(opts *Config) *MultiClient {
 // GetInternalClient method will return the pointer to internal memory cache client
 func (cc *MultiClient) GetInternalClient() *cache.Cache {
 	return cc.client
+}
+
+func (cc *MultiClient) GetMemcacheClient() *memcache.Client {
+	return cc.mc
 }
 
 func (cc *MultiClient) getKeyName(key string) string {
@@ -225,4 +230,35 @@ func (cc *MultiClient) Delete(key string) {
 	k := cc.getKeyName(key)
 	cc.client.Delete(k)
 	cc.mc.Delete(k)
+}
+
+func (cc *MultiClient) IncrementKey(key string, val uint64) uint64 {
+	if cc.mc == nil {
+		return 0
+	}
+	k := cc.getKeyName(key)
+	_, err := cc.mc.Get(k)
+	if err == nil {
+		newValue, _ := cc.mc.Increment(k, val)
+		return newValue
+	}
+	cc.mc.Set(&memcache.Item{
+		Key:        k,
+		Value:      []byte(fmt.Sprintf("%d", val)),
+		Expiration: cc.expiration,
+	})
+	return val
+}
+
+func (cc *MultiClient) DecrementKey(key string, val uint64) uint64 {
+	if cc.mc == nil {
+		return 0
+	}
+	k := cc.getKeyName(key)
+	_, err := cc.mc.Get(k)
+	if err == nil {
+		newValue, _ := cc.mc.Decrement(k, val)
+		return newValue
+	}
+	return 0
 }
