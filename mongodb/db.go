@@ -12,6 +12,7 @@ import (
 )
 
 type Config struct {
+	URI        string
 	AuthSource string
 	Username   string
 	Password   string
@@ -29,21 +30,26 @@ type Client struct {
 // NewClient method takes a config map argument
 func NewClient(conf Config) (*Client, error) {
 	var client = &Client{}
-	var auth = &options.Credential{
-		AuthSource: conf.AuthSource,
-		Username:   conf.Username,
-		Password:   conf.Password,
-	}
-	var rs = conf.Opts
-	var opts = &options.ClientOptions{
-		Hosts:      conf.Hosts,
-		ReplicaSet: &rs,
-	}
-	if len(conf.Username) > 0 && len(conf.Password) > 0 {
-		opts.Auth = auth
-	}
-	if conf.ReadPref == "secondary" {
-		opts.SetReadPreference(readpref.Secondary())
+	var opts *options.ClientOptions
+	if conf.URI != "" {
+		opts = options.Client().ApplyURI(conf.URI)
+	} else {
+		var auth = &options.Credential{
+			AuthSource: conf.AuthSource,
+			Username:   conf.Username,
+			Password:   conf.Password,
+		}
+		var rs = conf.Opts
+		opts = &options.ClientOptions{
+			Hosts:      conf.Hosts,
+			ReplicaSet: &rs,
+		}
+		if len(conf.Username) > 0 && len(conf.Password) > 0 {
+			opts.Auth = auth
+		}
+		if conf.ReadPref == "secondary" {
+			opts.SetReadPreference(readpref.Secondary())
+		}
 	}
 	mongoClient, err := mongo.Connect(context.Background(), opts)
 	if err != nil {
