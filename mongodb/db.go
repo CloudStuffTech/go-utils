@@ -27,6 +27,35 @@ type Client struct {
 	db      *mongo.Database
 }
 
+func NewMongoClientOnly(conf Config) (*mongo.Client, error) {
+	var opts *options.ClientOptions
+	if conf.URI != "" {
+		opts = options.Client().ApplyURI(conf.URI)
+	} else {
+		var auth = &options.Credential{
+			AuthSource: conf.AuthSource,
+			Username:   conf.Username,
+			Password:   conf.Password,
+		}
+		var rs = conf.Opts
+		opts = &options.ClientOptions{
+			Hosts:      conf.Hosts,
+			ReplicaSet: &rs,
+		}
+		if len(conf.Username) > 0 && len(conf.Password) > 0 {
+			opts.Auth = auth
+		}
+		if conf.ReadPref == "secondary" {
+			opts.SetReadPreference(readpref.Secondary())
+		}
+	}
+	mongoClient, err := mongo.Connect(context.Background(), opts)
+	if err != nil {
+		return nil, err
+	}
+	return mongoClient, nil
+}
+
 // NewClient method takes a config map argument
 func NewClient(conf Config) (*Client, error) {
 	var client = &Client{}
@@ -58,6 +87,14 @@ func NewClient(conf Config) (*Client, error) {
 	client.mclient = mongoClient
 	client.db = mongoClient.Database(conf.Database)
 	return client, nil
+}
+
+func (c *Client) SetDb(db *mongo.Database) {
+	c.db = db
+}
+
+func (c *Client) SetClient(mclient *mongo.Client) {
+	c.mclient = mclient
 }
 
 func (c *Client) GetDb() *mongo.Database {
