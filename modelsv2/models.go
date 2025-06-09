@@ -12,6 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+const OBJECT_ID_LEN = 24
+
 // Model interface is a generic type for all the models
 type Model interface {
 	New() Model
@@ -306,6 +308,16 @@ func FindByID(coll *mongo.Collection, id string) *mongo.SingleResult {
 	var duration = time.Second
 	var opts = &options.FindOneOptions{MaxTime: &duration}
 
+	var query = bson.M{"_id": id}
+	if len(id) == 24 {
+		query["_id"], _ = primitive.ObjectIDFromHex(id)
+	}
+	var result = coll.FindOne(context.Background(), query, opts)
+	return result
+}
+
+// FindByID method will try to find the document in collection with given id
+func FindByIDWithOpts(coll *mongo.Collection, id string, opts *options.FindOneOptions) *mongo.SingleResult {
 	var query = bson.M{"_id": id}
 	if len(id) == 24 {
 		query["_id"], _ = primitive.ObjectIDFromHex(id)
