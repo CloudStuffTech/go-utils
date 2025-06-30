@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/CloudStuffTech/go-utils/cache"
+	"github.com/CloudStuffTech/go-utils/misc"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -292,7 +293,7 @@ func CacheFirst(cacheClient *cache.MultiClient, db *mongo.Database, model Model,
 	return r
 }
 
-// CacheFirst method will try to find the object with given id in cache else it
+// CacheFirstWithOpts method will try to find the object with given query and find options in cache else it
 // will query the db and save the result in cache
 func CacheFirstWithOpts(cacheClient *cache.MultiClient, db *mongo.Database, model Model, query bson.M, queryOpts *FindOptions) Model {
 	var cacheKey = GetCacheKeyWithOpts(model, query, queryOpts)
@@ -356,7 +357,7 @@ func GetCacheKeyWithOpts(model Model, query bson.M, queryOpts *FindOptions) stri
 		}
 	}
 
-	return fmt.Sprintf("%s", joinKeyParts(keyParts))
+	return misc.JoinKeyParts(keyParts)
 }
 
 // FindByID method will try to find the document in collection with given id
@@ -380,19 +381,4 @@ func FindByIDWithOpts(coll *mongo.Collection, id string, opts *options.FindOneOp
 	}
 	var result = coll.FindOne(context.Background(), query, opts)
 	return result
-}
-
-func joinKeyParts(parts []string) string {
-	return stringJoin(parts, "|")
-}
-
-func stringJoin(parts []string, sep string) string {
-	if len(parts) == 0 {
-		return ""
-	}
-	out := parts[0]
-	for i := 1; i < len(parts); i++ {
-		out += sep + parts[i]
-	}
-	return out
 }
