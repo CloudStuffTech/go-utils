@@ -3,9 +3,11 @@ package modelsv2
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/CloudStuffTech/go-utils/cache"
+	"github.com/CloudStuffTech/go-utils/misc"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -291,6 +293,19 @@ func CacheFirst(cacheClient *cache.MultiClient, db *mongo.Database, model Model,
 	return r
 }
 
+// CacheFirstWithOpts method will try to find the object with given query and find options in cache else it
+// will query the db and save the result in cache
+func CacheFirstWithOpts(cacheClient *cache.MultiClient, db *mongo.Database, model Model, query bson.M, queryOpts *FindOptions) Model {
+	var cacheKey = GetCacheKeyWithOpts(model, query, queryOpts)
+	var result, found = cacheClient.Get(cacheKey)
+	if found {
+		return result.(Model)
+	}
+	r := FindOneWithOpts(db, model, query, queryOpts)
+	cacheClient.Set(cacheKey, r)
+	return r
+}
+
 // DateQuery will return the bson representation to query daterange between
 // 2 time intervals
 func DateQuery(start, end time.Time) bson.M {
@@ -301,6 +316,48 @@ func DateQuery(start, end time.Time) bson.M {
 // GetCacheKey method returns the cache key for model with id
 func GetCacheKey(model Model, id string) string {
 	return model.Table() + "::" + id
+}
+
+func GetCacheKeyWithOpts(model Model, query bson.M, queryOpts *FindOptions) string {
+	keyParts := []string{model.Table() + "::"}
+
+	// Serialize the query
+	if queryBytes, err := json.Marshal(query); err == nil {
+		keyParts = append(keyParts, "query="+string(queryBytes))
+	}
+
+	// Add each optional part
+	if queryOpts != nil {
+		if queryOpts.Sort != nil {
+			if b, err := json.Marshal(queryOpts.Sort); err == nil {
+				keyParts = append(keyParts, "sort="+string(b))
+			}
+		}
+		if queryOpts.Hint != nil {
+			if b, err := json.Marshal(queryOpts.Hint); err == nil {
+				keyParts = append(keyParts, "hint="+string(b))
+			}
+		}
+		if queryOpts.Projection != nil {
+			if b, err := json.Marshal(queryOpts.Projection); err == nil {
+				keyParts = append(keyParts, "projection="+string(b))
+			}
+		}
+		if queryOpts.Limit != nil {
+			keyParts = append(keyParts, fmt.Sprintf("limit=%d", *queryOpts.Limit))
+		}
+		if queryOpts.Skip != nil {
+			keyParts = append(keyParts, fmt.Sprintf("skip=%d", *queryOpts.Skip))
+		}
+		if queryOpts.BatchSize != nil {
+			keyParts = append(keyParts, fmt.Sprintf("batchSize=%d", *queryOpts.BatchSize))
+		}
+		if queryOpts.Timeout > 0 {
+			keyParts = append(keyParts, fmt.Sprintf("timeout=%s", queryOpts.Timeout.String()))
+		}
+	}
+
+	return misc.JoinKeyParts(keyParts)
 }
 
 // FindByID method will try to find the document in collection with given id
