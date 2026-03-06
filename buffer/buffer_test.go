@@ -9,6 +9,17 @@ import (
 	"time"
 )
 
+// mustNewBuffer is a test helper that fails the test/benchmark immediately
+// if the buffer fails to initialize.
+func mustNewBuffer[T any](tb testing.TB, cfg Config[T]) *Buffer[T] {
+	tb.Helper() // Marks this as a helper so error line numbers point to the test, not here!
+	buf, err := NewBuffer(cfg)
+	if err != nil {
+		tb.Fatalf("failed to initialize buffer: %v", err)
+	}
+	return buf
+}
+
 func BenchmarkBuffer_ParallelThroughput(b *testing.B) {
 	// 1. Setup mock telemetry to verify everything processed
 	var totalFlushed atomic.Int64
@@ -27,10 +38,7 @@ func BenchmarkBuffer_ParallelThroughput(b *testing.B) {
 		},
 	}
 
-	buf, err := NewBuffer(cfg)
-	if err != nil {
-		b.Fatal(err)
-	}
+	buf := mustNewBuffer(b, cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -91,7 +99,7 @@ func TestBuffer_Basic(t *testing.T) {
 		},
 	}
 
-	buf, _ := NewBuffer(cfg)
+	buf := mustNewBuffer(t, cfg)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel) // Automatically fires when the test finishes (or panics)
 
@@ -132,7 +140,7 @@ func TestBuffer_FlushInterval(t *testing.T) {
 		},
 	}
 
-	buf, _ := NewBuffer(cfg)
+	buf := mustNewBuffer(t, cfg)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel) // Automatically fires when the test finishes (or panics)
 
@@ -165,7 +173,7 @@ func TestBuffer_Close(t *testing.T) {
 		},
 	}
 
-	buf, _ := NewBuffer(cfg)
+	buf := mustNewBuffer(t, cfg)
 
 	// We use a channel to signal when Run() is finished
 	done := make(chan struct{})
@@ -206,7 +214,7 @@ func TestBuffer_WillOverflow(t *testing.T) {
 		},
 	}
 
-	buf, _ := NewBuffer(cfg)
+	buf := mustNewBuffer(t, cfg)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel) // Automatically fires when the test finishes (or panics)
 
@@ -260,7 +268,7 @@ func TestBuffer_OnReject(t *testing.T) {
 		Flush: func(ctx context.Context, batch []int) error { return nil },
 	}
 
-	buf, _ := NewBuffer(cfg)
+	buf := mustNewBuffer(t, cfg)
 	ctx := context.Background()
 
 	// Start the buffer and immediately add an odd number
@@ -298,7 +306,7 @@ func TestBuffer_OnFlushError(t *testing.T) {
 		},
 	}
 
-	buf, _ := NewBuffer(cfg)
+	buf := mustNewBuffer(t, cfg)
 	ctx := context.Background()
 	go buf.Run(ctx)
 
@@ -333,7 +341,7 @@ func TestBuffer_ConcurrencyCorrectness(t *testing.T) {
 		},
 	}
 
-	buf, _ := NewBuffer(cfg)
+	buf := mustNewBuffer(t, cfg)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel) // Automatically fires when the test finishes (or panics)
 
@@ -383,7 +391,7 @@ func TestBuffer_Backpressure(t *testing.T) {
 		},
 	}
 
-	buf, _ := NewBuffer(cfg)
+	buf := mustNewBuffer(t, cfg)
 	ctx := context.Background()
 	go buf.Run(ctx)
 
@@ -421,7 +429,7 @@ func TestBuffer_FlushContextCancellation(t *testing.T) {
 		},
 	}
 
-	buf, _ := NewBuffer(cfg)
+	buf := mustNewBuffer(t, cfg)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go buf.Run(ctx)
@@ -454,7 +462,7 @@ func TestBuffer_NoEmptyFlushes(t *testing.T) {
 		},
 	}
 
-	buf, _ := NewBuffer(cfg)
+	buf := mustNewBuffer(t, cfg)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel) // Automatically fires when the test finishes (or panics)
 
