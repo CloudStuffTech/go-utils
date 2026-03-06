@@ -345,7 +345,7 @@ func (b *Buffer[T]) ItemsInChannel() int {
 //	    defer cancel()
 //	    return backend.Send(flushCtx, batch)
 //	},
-func (b *Buffer[T]) Run(ctx context.Context) (err error) {
+func (b *Buffer[T]) Run(ctx context.Context) error {
 	cfg := b.cfg
 	batch := make([]T, 0, cfg.Capacity)
 
