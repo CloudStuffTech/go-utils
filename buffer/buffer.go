@@ -250,6 +250,12 @@ func NewBuffer[T any](cfg Config[T]) (*Buffer[T], error) {
 //
 // Add must not be called after Close. Doing so will panic.
 func (b *Buffer[T]) Add(ctx context.Context, item T) error {
+	// If context is already cancelled, we just return
+	// so that items are not added in the select
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	select {
 	case b.dataChan <- item:
 		return nil
