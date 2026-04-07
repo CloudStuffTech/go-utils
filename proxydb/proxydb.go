@@ -2,13 +2,16 @@ package proxydb
 
 import (
 	"errors"
+	"os"
+	"syscall"
 
 	"github.com/etf1/ip2proxy"
 )
 
 type Client struct {
-	dbpath string
-	DB     *ip2proxy.DB
+	dbpath   string
+	DB       *ip2proxy.DB
+	mmapData []byte
 }
 
 type Data struct {
@@ -22,14 +25,50 @@ func NewClient(dbpath string) *Client {
 	return client
 }
 
-func (c *Client) Open() error {
-	var err error
-	c.DB, err = ip2proxy.Open(c.dbpath)
+func openMmap(c *Client) error {
+	file, err := os.Open(c.dbpath)
 	if err != nil {
-		c.DB = nil
+		return err
+	}
+	defer file.Close() // Safe to close the file descriptor after mapping
+
+	stat, err := file.Stat()
+	if err != nil {
+		return err
+	}
+
+	// Map the file directly into virtual memory (Bypassing Go's Heap)
+	c.mmapData, err = syscall.Mmap(
+		int(file.Fd()),
+		0,
+		int(stat.Size()),
+		syscall.PROT_READ,  // Read-only memory
+		syscall.MAP_SHARED, // Share with OS page cache
+	)
+	if err != nil {
+		return err
+	}
+
+	c.DB, err = ip2proxy.FromBytes(c.mmapData)
+	if err != nil {
+		// Clean up the OS memory if parsing fails
+		syscall.Munmap(c.mmapData)
+		c.mmapData = nil
 		return err
 	}
 	return nil
+}
+
+func (c *Client) Open() error {
+	err := openMmap(c)
+	return err
+	// var err error
+	// c.DB, err = ip2proxy.Open(c.dbpath)
+	// if err != nil {
+	// 	c.DB = nil
+	// 	return err
+	// }
+	// return nil
 }
 
 func (c *Client) proxyName(proxyType ip2proxy.ProxyType) string {
