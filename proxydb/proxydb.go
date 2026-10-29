@@ -60,15 +60,7 @@ func openMmap(c *Client) error {
 }
 
 func (c *Client) Open() error {
-	err := openMmap(c)
-	return err
-	// var err error
-	// c.DB, err = ip2proxy.Open(c.dbpath)
-	// if err != nil {
-	// 	c.DB = nil
-	// 	return err
-	// }
-	// return nil
+	return openMmap(c)
 }
 
 func (c *Client) proxyName(proxyType ip2proxy.ProxyType) string {
