@@ -71,6 +71,21 @@ func ISP(ip string) string {
 	return record.ISP
 }
 
+func Postal(ip string) string {
+	if cityDb == nil || len(ip) == 0 {
+		return ""
+	}
+	netIP := net.ParseIP(ip)
+	if netIP == nil {
+		return ""
+	}
+	record, err := cityDb.City(netIP)
+	if err != nil || record == nil {
+		return ""
+	}
+	return record.Postal.Code
+}
+
 // Close method will close the maxmind db files
 func Close() {
 	fmt.Println("closing maxmind db files!!")
