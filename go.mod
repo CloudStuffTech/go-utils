@@ -1,8 +1,6 @@
 module github.com/CloudStuffTech/go-utils
 
-go 1.22.0
-
-toolchain go1.22.3
+go 1.24
 
 require (
 	cloud.google.com/go/pubsub v1.43.0
@@ -46,7 +44,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/juju/errors v0.0.0-20220331221717-b38fca44723b // indirect
-	github.com/klauspost/compress v1.17.9 // indirect
+	github.com/klauspost/compress v1.18.7 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
